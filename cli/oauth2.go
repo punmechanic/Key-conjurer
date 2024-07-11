@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"net"
 	"net/http"
@@ -66,7 +65,6 @@ func NewHTTPClient() *http.Client {
 func DiscoverOAuth2Config(ctx context.Context, domain, clientID string) (*oauth2.Config, error) {
 	provider, err := oidc.NewProvider(ctx, domain)
 	if err != nil {
-		log.Printf("%s", err)
 		return nil, fmt.Errorf("couldn't discover OIDC configuration for %s: %w", domain, err)
 	}
 
@@ -405,7 +403,6 @@ func DiscoverConfigAndExchangeTokenForAssertion(ctx context.Context, client *htt
 
 	assertionBytes, err := ExchangeWebSSOTokenForSAMLAssertion(ctx, client, oidcDomain, tok)
 	if err != nil {
-		log.Printf("%#v", err)
 		return nil, "", OktaError{Message: "failed to fetch SAML assertion", InnerError: err}
 	}
 
