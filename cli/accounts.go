@@ -10,70 +10,53 @@ import (
 	"net/url"
 
 	"github.com/riotgames/key-conjurer/internal/api"
-	"github.com/spf13/cobra"
 	"golang.org/x/oauth2"
 )
 
-var (
-	FlagNoRefresh     = "no-refresh"
-	FlagServerAddress = "server-address"
+var ErrSessionExpired = errors.New("session expired")
 
-	ErrSessionExpired = errors.New("session expired")
-)
-
-func init() {
-	accountsCmd.Flags().Bool(FlagNoRefresh, false, "Indicate that the account list should not be refreshed when executing this command. This is useful if you're not able to reach the account server.")
-	accountsCmd.Flags().String(FlagServerAddress, ServerAddress, "The address of the account server. This does not usually need to be changed or specified.")
+type AccountsCommand struct {
+	NoRefresh     bool   `help:"Indicate that the account list should not be refreshed when executing this command. This is useful if you're not able to reach the account server."`
+	ServerAddress string `name:"address" help:"The address of the account server" hidden:"" optional:""`
 }
 
-var accountsCmd = &cobra.Command{
-	Use:   "accounts",
-	Short: "Prints and optionally refreshes the list of accounts you have access to.",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		config := ConfigFromCommand(cmd)
-		stdOut := cmd.OutOrStdout()
-		noRefresh, _ := cmd.Flags().GetBool(FlagNoRefresh)
-		loud := !ShouldUseMachineOutput(cmd.Flags())
-		if noRefresh {
-			config.DumpAccounts(stdOut, loud)
-
-			if loud {
-				// intentionally uses PrintErrf was a warning
-				cmd.PrintErrf("--%s was specified - these results may be out of date, and you may not have access to accounts in this list.\n", FlagNoRefresh)
-			}
-
-			return nil
-		}
-
-		serverAddr, _ := cmd.Flags().GetString(FlagServerAddress)
-		serverAddrURI, err := url.Parse(serverAddr)
-		if err != nil {
-			return genericError{
-				ExitCode: ExitCodeValueError,
-				Message:  fmt.Sprintf("--%s had an invalid value: %s\n", FlagServerAddress, err),
-			}
-		}
-
-		if HasTokenExpired(config.Tokens) {
-			return ErrTokensExpiredOrAbsent
-		}
-
-		tok := oauth2.Token{
-			AccessToken:  config.Tokens.AccessToken,
-			RefreshToken: config.Tokens.RefreshToken,
-			Expiry:       config.Tokens.Expiry,
-			TokenType:    config.Tokens.TokenType,
-		}
-
-		accounts, err := refreshAccounts(cmd.Context(), serverAddrURI, &tok)
-		if err != nil {
-			return fmt.Errorf("error refreshing accounts: %w", err)
-		}
-
-		config.UpdateAccounts(accounts)
-		config.DumpAccounts(stdOut, loud)
+func (a AccountsCommand) Run(ctx AppContext) error {
+	if a.ServerAddress == "" {
+		a.ServerAddress = ServerAddress
+	}
+	config := ctx.Config
+	if a.NoRefresh {
+		config.DumpAccounts(ctx.Stdout, true)
 		return nil
-	},
+	}
+
+	serverAddrURI, err := url.Parse(a.ServerAddress)
+	if err != nil {
+		return genericError{
+			ExitCode: ExitCodeValueError,
+			Message:  fmt.Sprintf("--address had an invalid value: %s\n", err),
+		}
+	}
+
+	if HasTokenExpired(config.Tokens) {
+		return ErrTokensExpiredOrAbsent
+	}
+
+	tok := oauth2.Token{
+		AccessToken:  config.Tokens.AccessToken,
+		RefreshToken: config.Tokens.RefreshToken,
+		Expiry:       config.Tokens.Expiry,
+		TokenType:    config.Tokens.TokenType,
+	}
+
+	accounts, err := refreshAccounts(ctx, serverAddrURI, &tok)
+	if err != nil {
+		return fmt.Errorf("error refreshing accounts: %w", err)
+	}
+
+	config.UpdateAccounts(accounts)
+	config.DumpAccounts(ctx.Stdout, true)
+	return nil
 }
 
 func refreshAccounts(ctx context.Context, serverAddr *url.URL, tok *oauth2.Token) ([]Account, error) {
