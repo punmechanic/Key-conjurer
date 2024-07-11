@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -146,4 +149,21 @@ func Test_ListenAnyPort_RejectsIfAllProvidedPortsExhausted(t *testing.T) {
 
 	_, err := ListenAnyPort("127.0.0.1", activePorts)(context.Background())
 	assert.ErrorIs(t, err, ErrNoPortsAvailable)
+}
+
+func Test_TokenExchange_ProcessProcess_Non200ErrorCodeReturnsError(t *testing.T) {
+	var req TokenExchange
+	bodyProps := map[string]string{
+		"error":             "unauthorized",
+		"error_description": "...",
+	}
+
+	blob, _ := json.Marshal(bodyProps)
+	tokens, err := req.ProcessResponse(&http.Response{
+		StatusCode: http.StatusBadRequest,
+		Body:       io.NopCloser(bytes.NewReader(blob)),
+	})
+
+	assert.Nil(t, tokens)
+	assert.ErrorIs(t, ErrUnauthorized, err)
 }
