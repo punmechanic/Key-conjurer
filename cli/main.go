@@ -10,14 +10,15 @@ import (
 	"log/slog"
 
 	"github.com/alecthomas/kong"
-	"github.com/spf13/cobra"
 )
 
 const (
 	// WSAEACCES is the Windows error code for attempting to access a socket that you don't have permission to access.
 	//
 	// This commonly occurs if the socket is in use or was not closed correctly, and can be resolved by restarting the hns service.
-	WSAEACCES = 10013
+	WSAEACCES    = 10013
+	cloudAws     = "aws"
+	cloudTencent = "tencent"
 )
 
 // IsWindowsPortAccessError determines if the given error is the error WSAEACCES.
@@ -37,12 +38,16 @@ func init() {
 }
 
 type CLI struct {
-	Login        LoginCommand   `cmd:"login" help:"Log in to KeyConjurer using a web browser."`
-	Get          GetCommand     `cmd:"get" help:"Retrieves temporary cloud API credentials."`
-	Alias        AliasCommand   `cmd:"alias" help:"Give an account a nickname."`
-	Unalias      UnaliasCommand `cmd:"unalias" help:"Remove alias from account."`
-	ListAccounts struct{}       `cmd:"accounts" name:"accounts"`
-	ListRoles    RolesCommand   `cmd:"roles" name:"roles" help:"List roles for an account."`
+	Login        LoginCommand    `cmd:"login" help:"Log in to KeyConjurer using a web browser."`
+	Get          GetCommand      `cmd:"get" help:"Retrieves temporary cloud API credentials."`
+	Alias        AliasCommand    `cmd:"alias" help:"Give an account a nickname."`
+	Unalias      UnaliasCommand  `cmd:"unalias" help:"Remove alias from account."`
+	ListAccounts AccountsCommand `cmd:"accounts" name:"accounts" help:"List accounts you have access to."`
+	ListRoles    RolesCommand    `cmd:"roles" name:"roles" help:"List roles for an account."`
+	Set          struct {
+		TTL           TimeToLiveCommand    `cmd:"ttl" help:"Sets ttl value in number of hours."`
+		TimeRemaining TimeRemainingCommand `cmd:"time-remaining" help:"Sets time remaining value in number of minutes."`
+	} `cmd:"set" help:"Configure KeyConjurer."`
 
 	OIDCDomain   string `name:"oidc_domain" hidden:"" help:"The domain of the OIDC IdP to use as an authorization server"`
 	OIDCClientID string `name:"client_id" hidden:"" help:"The client ID of the OIDC application to identify as"`
@@ -105,11 +110,11 @@ To get started run the following commands:
 
 	var codeErr codeError
 	if errors.As(err, &codeErr) {
-		cobra.CheckErr(codeErr)
+		checkErr(codeErr)
 		os.Exit(int(codeErr.Code()))
 	} else if err != nil {
 		// Probably a cobra error.
-		cobra.CheckErr(err)
+		checkErr(err)
 		os.Exit(ExitCodeUnknownError)
 	}
 
@@ -117,6 +122,16 @@ To get started run the following commands:
 	if err != nil {
 		// Could not save configuration for some reason
 		fmt.Fprintf(os.Stderr, "Could not save configuration: %s\n", err)
+		os.Exit(1)
+	}
+}
+
+// checkErr prints the msg with the prefix 'Error:' and exits with error code 1. If the msg is nil, it does nothing.
+//
+// Copied from Cobra.
+func checkErr(msg interface{}) {
+	if msg != nil {
+		fmt.Fprintln(os.Stderr, "Error:", msg)
 		os.Exit(1)
 	}
 }

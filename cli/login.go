@@ -8,7 +8,6 @@ import (
 	"log/slog"
 
 	"github.com/pkg/browser"
-	"github.com/spf13/pflag"
 )
 
 var (
@@ -16,16 +15,6 @@ var (
 	LoginOutputURL      = "url"
 	LoginOutputFriendly = "friendly"
 )
-
-// ShouldUseMachineOutput indicates whether or not we should write to standard output as if the user is a machine.
-//
-// What this means is implementation specific, but this usually indicates the user is trying to use this program in a script and we should avoid user-friendly output messages associated with values a user might find useful.
-func ShouldUseMachineOutput(flags *pflag.FlagSet) bool {
-	quiet, _ := flags.GetBool(FlagQuiet)
-	fi, _ := os.Stdout.Stat()
-	isPiped := fi.Mode()&os.ModeCharDevice == 0
-	return isPiped || quiet
-}
 
 type LoginCommand struct {
 	OIDCDomain string `hidden:""`
