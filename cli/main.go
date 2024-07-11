@@ -51,12 +51,6 @@ type CLI struct {
 	Timeout      int    `help:"Amount of time in seconds to wait for KeyConjurer to respond" default:"120"`
 }
 
-type AppContext struct {
-	Config       *Config
-	OIDCDomain   string
-	OIDCClientID string
-}
-
 func main() {
 	var cli CLI
 	ctx := kong.Parse(&cli, kong.Name("keyconjurer"), kong.Description(`KeyConjurer retrieves temporary credentials from Okta with the assistance of an optional API.
@@ -101,7 +95,7 @@ To get started run the following commands:
 	// nextCtx, _ := context.WithTimeout(cmd.Context(), time.Duration(timeout)*time.Second)
 	// cmd.SetContext(ConfigContext(nextCtx, &config, configPath))
 
-	err = ctx.Run(&appCtx)
+	err = ctx.Run(appCtx)
 
 	if IsWindowsPortAccessError(err) {
 		fmt.Fprintf(os.Stderr, "Encountered an issue when opening the port for KeyConjurer: %s\n", err)

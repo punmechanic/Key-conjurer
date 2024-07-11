@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -68,9 +67,8 @@ func (GetCommand) Help() string {
 
 var ErrNoRoleFlag = errors.New("no role flag specified")
 
-func (g GetCommand) Run(appCtx *AppContext) error {
-	ctx := context.Background()
-	if HasTokenExpired(appCtx.Config.Tokens) {
+func (g GetCommand) Run(ctx AppContext) error {
+	if HasTokenExpired(ctx.Config.Tokens) {
 		// TODO: Re-implement
 		return ErrTokensExpiredOrAbsent
 		// if ok, _ := cmd.Flags().GetBool(FlagLogin); ok {
@@ -105,7 +103,7 @@ func (g GetCommand) Run(appCtx *AppContext) error {
 	accountID := g.AccountName
 	if accountID == "" {
 		// No account specified. Can we use the most recent one?
-		accountID = *appCtx.Config.LastUsedAccount
+		accountID = *ctx.Config.LastUsedAccount
 	}
 
 	if accountID == "" {
@@ -114,7 +112,7 @@ func (g GetCommand) Run(appCtx *AppContext) error {
 		return errors.New("oopsie daisy")
 	}
 
-	account, ok := resolveApplicationInfo(appCtx.Config, g.BypassCache, accountID)
+	account, ok := resolveApplicationInfo(ctx.Config, g.BypassCache, accountID)
 	if !ok {
 		return UnknownAccountError(g.AccountName, FlagBypassCache)
 	}
@@ -129,8 +127,8 @@ func (g GetCommand) Run(appCtx *AppContext) error {
 	}
 
 	// Only override g.TimeRemaining if the user didn't specify one on the command line
-	if appCtx.Config.TimeRemaining != 0 && g.TimeRemaining == DefaultTimeRemaining {
-		g.TimeRemaining = int(appCtx.Config.TimeRemaining)
+	if ctx.Config.TimeRemaining != 0 && g.TimeRemaining == DefaultTimeRemaining {
+		g.TimeRemaining = int(ctx.Config.TimeRemaining)
 	}
 
 	var credentials CloudCredentials
@@ -144,7 +142,7 @@ func (g GetCommand) Run(appCtx *AppContext) error {
 		return echoCredentials(accountID, accountID, credentials, g.Output, g.Shell, g.OutputDirectory)
 	}
 
-	samlResponse, assertionStr, err := DiscoverConfigAndExchangeTokenForAssertion(ctx, NewHTTPClient(), appCtx.Config.Tokens, appCtx.OIDCDomain, appCtx.OIDCClientID, account.ID)
+	samlResponse, assertionStr, err := DiscoverConfigAndExchangeTokenForAssertion(ctx, NewHTTPClient(), ctx.Config.Tokens, ctx.OIDCDomain, ctx.OIDCClientID, account.ID)
 	if err != nil {
 		return err
 	}
@@ -154,8 +152,8 @@ func (g GetCommand) Run(appCtx *AppContext) error {
 		return UnknownRoleError(g.Role, g.AccountName)
 	}
 
-	if g.TimeToLive == 1 && appCtx.Config.TTL != 0 {
-		g.TimeToLive = int(appCtx.Config.TTL)
+	if g.TimeToLive == 1 && ctx.Config.TTL != 0 {
+		g.TimeToLive = int(ctx.Config.TTL)
 	}
 
 	if g.Cloud == cloudAws {
@@ -195,7 +193,7 @@ func (g GetCommand) Run(appCtx *AppContext) error {
 		account.MostRecentRole = g.Role
 	}
 
-	appCtx.Config.LastUsedAccount = &accountID
+	ctx.Config.LastUsedAccount = &accountID
 	return echoCredentials(accountID, accountID, credentials, g.Output, g.Shell, g.OutputDirectory)
 }
 

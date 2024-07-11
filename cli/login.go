@@ -37,8 +37,8 @@ func (c LoginCommand) Help() string {
 	return "You will be required to open the URL printed to the console."
 }
 
-func (c LoginCommand) Run(ctx *AppContext) error {
-	oauthCfg, err := DiscoverOAuth2Config(context.TODO(), c.OIDCDomain, c.ClientID)
+func (c LoginCommand) Run(ctx AppContext) error {
+	oauthCfg, err := DiscoverOAuth2Config(ctx, c.OIDCDomain, c.ClientID)
 	if err != nil {
 		return err
 	}
