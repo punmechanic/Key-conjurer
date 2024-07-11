@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 	"syscall"
+	"time"
 
 	"log/slog"
 
@@ -84,6 +85,7 @@ To get started run the following commands:
 		Config:       &config,
 		OIDCDomain:   cli.OIDCDomain,
 		OIDCClientID: cli.OIDCClientID,
+		Timeout:      time.Now().Add(time.Duration(cli.Timeout) * time.Second),
 	}
 
 	// Set the defaults that are injected by the build process if the user didn't provide any.
@@ -94,11 +96,6 @@ To get started run the following commands:
 	if appCtx.OIDCDomain == "" {
 		appCtx.OIDCDomain = OIDCDomain
 	}
-
-	// TODO:
-	// timeout, _ := cmd.Flags().GetInt(FlagTimeout)
-	// nextCtx, _ := context.WithTimeout(cmd.Context(), time.Duration(timeout)*time.Second)
-	// cmd.SetContext(ConfigContext(nextCtx, &config, configPath))
 
 	err = ctx.Run(appCtx)
 
