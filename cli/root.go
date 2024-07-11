@@ -23,8 +23,6 @@ func init() {
 	rootCmd.AddCommand(accountsCmd)
 	rootCmd.AddCommand(setCmd)
 	rootCmd.AddCommand(&switchCmd)
-	rootCmd.AddCommand(&aliasCmd)
-	rootCmd.AddCommand(&unaliasCmd)
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
 }
 

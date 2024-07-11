@@ -1,15 +1,10 @@
 package main
 
-import (
-	"github.com/spf13/cobra"
-)
+type UnaliasCommand struct {
+	Alias string `arg:""`
+}
 
-var unaliasCmd = cobra.Command{
-	Use:     "unalias <accountName/alias>",
-	Short:   "Remove alias from account.",
-	Args:    cobra.ExactArgs(1),
-	Example: "keyconjurer unalias bar",
-	Run: func(cmd *cobra.Command, args []string) {
-		config := ConfigFromCommand(cmd)
-		config.Unalias(args[0])
-	}}
+func (u UnaliasCommand) Run(ctx AppContext) error {
+	ctx.Config.Unalias(u.Alias)
+	return nil
+}

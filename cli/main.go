@@ -37,12 +37,12 @@ func init() {
 }
 
 type CLI struct {
-	Login        LoginCommand `cmd:"login" help:"Log in to KeyConjurer using a web browser."`
-	Get          GetCommand   `cmd:"get" help:"Retrieves temporary cloud API credentials."`
-	Alias        struct{}     `cmd:"alias"`
-	Unalias      struct{}     `cmd:"unalias"`
-	ListAccounts struct{}     `cmd:"accounts" name:"accounts"`
-	ListRoles    RolesCommand `cmd:"roles" name:"roles"`
+	Login        LoginCommand   `cmd:"login" help:"Log in to KeyConjurer using a web browser."`
+	Get          GetCommand     `cmd:"get" help:"Retrieves temporary cloud API credentials."`
+	Alias        AliasCommand   `cmd:"alias" help:"Give an account a nickname."`
+	Unalias      UnaliasCommand `cmd:"unalias" help:"Remove alias from account."`
+	ListAccounts struct{}       `cmd:"accounts" name:"accounts"`
+	ListRoles    RolesCommand   `cmd:"roles" name:"roles" help:"List roles for an account."`
 
 	OIDCDomain   string `name:"oidc_domain" hidden:"" help:"The domain of the OIDC IdP to use as an authorization server"`
 	OIDCClientID string `name:"client_id" hidden:"" help:"The client ID of the OIDC application to identify as"`
