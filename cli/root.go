@@ -21,12 +21,10 @@ func init() {
 	rootCmd.PersistentFlags().String(FlagConfigPath, "~/.keyconjurerrc", "path to .keyconjurerrc file")
 	rootCmd.PersistentFlags().Bool(FlagQuiet, false, "tells the CLI to be quiet; stdout will not contain human-readable informational messages")
 	rootCmd.AddCommand(accountsCmd)
-	rootCmd.AddCommand(getCmd)
 	rootCmd.AddCommand(setCmd)
 	rootCmd.AddCommand(&switchCmd)
 	rootCmd.AddCommand(&aliasCmd)
 	rootCmd.AddCommand(&unaliasCmd)
-	rootCmd.AddCommand(&rolesCmd)
 	rootCmd.SetVersionTemplate("{{.Version}}\n")
 }
 

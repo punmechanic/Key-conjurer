@@ -18,5 +18,5 @@ const (
 	// DefaultTTL for requested credentials in hours
 	DefaultTTL uint = 1
 	// DefaultTimeRemaining for new key requests in minutes
-	DefaultTimeRemaining uint = 5
+	DefaultTimeRemaining int = 5
 )

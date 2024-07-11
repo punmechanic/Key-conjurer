@@ -1,37 +1,45 @@
 package main
 
 import (
-	"github.com/spf13/cobra"
+	"context"
+	"fmt"
+	"io"
+	"os"
 )
 
-var rolesCmd = cobra.Command{
-	Use:   "roles <accountName/alias>",
-	Short: "Returns the roles that you have access to in the given account.",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		config := ConfigFromCommand(cmd)
-		if HasTokenExpired(config.Tokens) {
-			return ErrTokensExpiredOrAbsent
-		}
+type RolesCommand struct {
+	Account string `arg:"" required:""`
 
-		oidcDomain, _ := cmd.Flags().GetString(FlagOIDCDomain)
-		clientID, _ := cmd.Flags().GetString(FlagClientID)
+	Stdout io.Writer
+}
 
-		var applicationID = args[0]
-		account, ok := config.FindAccount(applicationID)
-		if ok {
-			applicationID = account.ID
-		}
+func (RolesCommand) Help() string {
+	return "Returns the roles that you have access to in the given account."
+}
 
-		samlResponse, _, err := DiscoverConfigAndExchangeTokenForAssertion(cmd.Context(), NewHTTPClient(), config.Tokens, oidcDomain, clientID, applicationID)
-		if err != nil {
-			return err
-		}
+func (r RolesCommand) Roles(appCtx *AppContext) error {
+	if r.Stdout == nil {
+		r.Stdout = os.Stdout
+	}
 
-		for _, name := range ListSAMLRoles(samlResponse) {
-			cmd.Println(name)
-		}
+	if HasTokenExpired(appCtx.Config.Tokens) {
+		return ErrTokensExpiredOrAbsent
+	}
 
-		return nil
-	},
+	account, ok := appCtx.Config.FindAccount(r.Account)
+	if ok {
+		r.Account = account.ID
+	}
+
+	ctx := context.Background()
+	samlResponse, _, err := DiscoverConfigAndExchangeTokenForAssertion(ctx, NewHTTPClient(), appCtx.Config.Tokens, appCtx.OIDCDomain, appCtx.OIDCClientID, r.Account)
+	if err != nil {
+		return err
+	}
+
+	for _, name := range ListSAMLRoles(samlResponse) {
+		fmt.Fprintln(r.Stdout, name)
+	}
+
+	return nil
 }
