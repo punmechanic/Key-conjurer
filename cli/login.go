@@ -20,6 +20,8 @@ type LoginCommand struct {
 	OIDCDomain string `hidden:""`
 	ClientID   string `hidden:""`
 	Output     string `enum:"browser,url,friendly" default:"browser"`
+
+	Force bool `name:"force" short:"f"`
 }
 
 func (c LoginCommand) Help() string {
@@ -27,7 +29,7 @@ func (c LoginCommand) Help() string {
 }
 
 func (c LoginCommand) Run(ctx AppContext) error {
-	if !HasTokenExpired(ctx.Config.Tokens) {
+	if !HasTokenExpired(ctx.Config.Tokens) && !c.Force {
 		return nil
 	}
 
