@@ -27,6 +27,10 @@ func (c LoginCommand) Help() string {
 }
 
 func (c LoginCommand) Run(ctx AppContext) error {
+	if !HasTokenExpired(ctx.Config.Tokens) {
+		return nil
+	}
+
 	oauthCfg, err := DiscoverOAuth2Config(ctx, c.OIDCDomain, c.ClientID)
 	if err != nil {
 		return err
