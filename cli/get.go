@@ -69,27 +69,19 @@ var ErrNoRoleFlag = errors.New("no role flag specified")
 
 func (g GetCommand) Run(ctx AppContext) error {
 	if HasTokenExpired(ctx.Config.Tokens) {
-		// TODO: Re-implement
-		return ErrTokensExpiredOrAbsent
-		// if ok, _ := cmd.Flags().GetBool(FlagLogin); ok {
-		// 	// urlOnly, _ := cmd.Flags().GetBool(FlagURLOnly)
-		// 	// noBrowser, _ := cmd.Flags().GetBool(FlagNoBrowser)
-		// 	login := LoginCommand{
-		// 		OIDCDomain: oidcDomain,
-		// 		ClientID:   clientID,
-		// 		Output:     LoginOutputFriendly,
-		// 	}
+		if g.Login {
+			cmd := LoginCommand{
+				OIDCDomain: ctx.OIDCDomain,
+				ClientID:   ctx.OIDCClientID,
+				Output:     LoginOutputFriendly,
+			}
 
-		// 	ctx := AppContext{
-		// 		Config: config,
-		// 	}
-
-		// 	if err := login.Run(&ctx); err != nil {
-		// 		return err
-		// 	}
-		// } else {
-		// }
-		// return nil
+			if err := cmd.Run(ctx); err != nil {
+				return err
+			}
+		} else {
+			return ErrTokensExpiredOrAbsent
+		}
 	}
 
 	if !isMemberOfSlice(permittedOutputTypes, g.Output) {
